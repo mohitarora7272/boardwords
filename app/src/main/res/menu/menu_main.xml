@@ -11,10 +11,38 @@
 
     <item
         android:id="@+id/board_list"
+        android:icon="@drawable/ic_format_list_bulleted_white_24dp"
         android:orderInCategory="200"
         android:showAsAction="always"
-        android:icon="@drawable/ic_format_list_bulleted_white_24dp"
         android:title="@string/board_list"
         tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/keyboard"
+        android:icon="@drawable/ic_keyboard_white_24dp"
+        android:orderInCategory="300"
+        android:showAsAction="always"
+        android:title="@string/keyboard"
+        tools:ignore="AppCompatResource">
+
+        <menu>
+
+            <item
+                android:id="@+id/aToZ"
+                android:title="@string/atoz"
+                tools:ignore="AppCompatResource" />
+
+            <item
+                android:id="@+id/qwerty"
+                android:title="@string/qwerty"
+                tools:ignore="AppCompatResource" />
+
+            <item
+                android:id="@+id/shuffle"
+                android:title="@string/shuffle"
+                tools:ignore="AppCompatResource" />
+
+        </menu>
+    </item>
 
 </menu>

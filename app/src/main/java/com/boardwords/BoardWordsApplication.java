@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 
+@SuppressWarnings("ALL")
 public class BoardWordsApplication extends Application {
     private static BoardWordsApplication sInstance;
 

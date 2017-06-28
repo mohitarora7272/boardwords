@@ -14,8 +14,32 @@ android {
     }
     buildTypes {
         release {
+            shrinkResources false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    def project = "BoardWords"
+                    //noinspection GroovyUnusedAssignment
+                    def SEP = "_"
+                    //noinspection GroovyUnusedAssignment
+                    def SEP_START = "("
+                    //noinspection GroovyUnusedAssignment
+                    def SEP_CLOSE = ")"
+                    //noinspection GroovyUnusedAssignment
+                    def buildType = variant.variantData.variantConfiguration.buildType.name
+                    //noinspection GroovyUnusedAssignment
+                    def version = variant.versionName
+                    def date = new Date();
+                    //noinspection GroovyUnusedAssignment
+                    def formattedDate = date.format('dd-MMM-yyyy')
+
+                    def newApkName = project + ".apk"
+
+                    output.outputFile = new File(output.outputFile.parent, newApkName)
+                }
+            }
         }
     }
 }
@@ -25,21 +49,20 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.1.1'
-    compile 'com.android.support:design:25.1.1'
-    compile 'com.android.support:support-v4:25.1.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:support-v4:25.3.1'
     compile 'com.j256.ormlite:ormlite-core:4.48'
     compile 'com.j256.ormlite:ormlite-android:4.48'
     compile 'com.android.support:multidex:1.0.1'
-    compile 'com.google.code.gson:gson:2.6.2'
+    compile 'com.google.code.gson:gson:2.7'
     compile 'com.jakewharton:butterknife:8.1.0'
-    apt 'com.jakewharton:butterknife-compiler:8.1.0'
-    compile 'com.android.support:cardview-v7:25.1.1'
-    compile 'com.android.support:recyclerview-v7:25.1.1'
+    compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
     compile 'com.yarolegovich:lovely-dialog:1.0.4'
     compile 'com.ramotion.foldingcell:folding-cell:1.1.0'
-    compile 'com.squareup.retrofit2:retrofit:2.1.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.0'
+    compile 'com.google.android.gms:play-services-ads:11.0.1'
+    compile 'com.github.varunest:sparkbutton:1.0.5'
+    apt 'com.jakewharton:butterknife-compiler:8.1.0'
     testCompile 'junit:junit:4.12'
 }

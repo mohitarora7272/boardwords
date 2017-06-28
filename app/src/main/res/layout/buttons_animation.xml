@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relateButtons"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/blackTransparent"
+    android:visibility="gone"
+    tools:ignore="Overdraw">
+
+    <com.varunest.sparkbutton.SparkButton
+        android:id="@+id/btnStar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:sparkbutton_activeImage="@drawable/icon_star"
+        app:sparkbutton_animationSpeed="1.5"
+        app:sparkbutton_iconSize="100dp"
+        app:sparkbutton_inActiveImage="@drawable/icon_star"
+        app:sparkbutton_primaryColor="@color/colorPrimary"
+        app:sparkbutton_secondaryColor="@color/colorPrimary" />
+
+    <com.varunest.sparkbutton.SparkButton
+        android:id="@+id/btnThumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:sparkbutton_activeImage="@drawable/thumbs_up"
+        app:sparkbutton_animationSpeed="1.5"
+        app:sparkbutton_iconSize="100dp"
+        app:sparkbutton_inActiveImage="@drawable/thumbs_up"
+        app:sparkbutton_primaryColor="@color/colorAccent"
+        app:sparkbutton_secondaryColor="@color/colorAccent" />
+
+    <com.varunest.sparkbutton.SparkButton
+        android:id="@+id/btnTrophy"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        app:sparkbutton_activeImage="@drawable/trophy_icon"
+        app:sparkbutton_animationSpeed="1.5"
+        app:sparkbutton_iconSize="100dp"
+        app:sparkbutton_inActiveImage="@drawable/trophy_icon"
+        app:sparkbutton_primaryColor="@color/md_green_A700"
+        app:sparkbutton_secondaryColor="@color/md_green_A700" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.varunest.sparkbutton.SparkButton
+            android:id="@+id/btnNewGame"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginRight="100dp"
+            android:visibility="gone"
+            app:sparkbutton_activeImage="@drawable/new_icon"
+            app:sparkbutton_animationSpeed="1.5"
+            app:sparkbutton_iconSize="50dp"
+            app:sparkbutton_inActiveImage="@drawable/new_icon"
+            app:sparkbutton_primaryColor="@color/colorPrimary"
+            app:sparkbutton_secondaryColor="@color/colorPrimary" />
+
+        <com.varunest.sparkbutton.SparkButton
+            android:id="@+id/btnRecords"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:visibility="gone"
+            app:sparkbutton_activeImage="@drawable/record_icon"
+            app:sparkbutton_animationSpeed="1.5"
+            app:sparkbutton_iconSize="52dp"
+            app:sparkbutton_inActiveImage="@drawable/record_icon"
+            app:sparkbutton_primaryColor="@color/record_anim"
+            app:sparkbutton_secondaryColor="@color/record_anim" />
+
+    </LinearLayout>
+
+    <com.varunest.sparkbutton.SparkButton
+        android:id="@+id/btnStart"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:sparkbutton_activeImage="@drawable/play_icon"
+        app:sparkbutton_animationSpeed="1.5"
+        app:sparkbutton_iconSize="100dp"
+        app:sparkbutton_inActiveImage="@drawable/play_icon"
+        app:sparkbutton_primaryColor="@color/md_deep_orange_500"
+        app:sparkbutton_secondaryColor="@color/md_deep_orange_500" />
+
+    <com.varunest.sparkbutton.SparkButton
+        android:id="@+id/btnTimeOut"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:sparkbutton_activeImage="@drawable/timeout_icon"
+        app:sparkbutton_animationSpeed="1.5"
+        app:sparkbutton_iconSize="100dp"
+        app:sparkbutton_inActiveImage="@drawable/timeout_icon"
+        app:sparkbutton_primaryColor="@color/time_anim"
+        app:sparkbutton_secondaryColor="@color/time_anim" />
+
+</RelativeLayout>

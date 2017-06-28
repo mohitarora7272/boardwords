@@ -13,10 +13,12 @@ import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
 
 import com.boardwords.R;
+import com.boardwords.utils.MediaPlayerUtil;
 
 import java.util.List;
 import java.util.Random;
 
+@SuppressWarnings("ALL")
 public class CharacterViewAdapter extends RecyclerView.Adapter<CharacterViewAdapter.RecyclerViewHolders> implements MediaPlayer.OnCompletionListener{
 
     private List<String> itemList;
@@ -25,15 +27,13 @@ public class CharacterViewAdapter extends RecyclerView.Adapter<CharacterViewAdap
     private ItemClickListener mClickListener;
     // Allows to remember the last item shown on screen
     private int lastPosition = -1;
-    private MediaPlayer mp;
+    private MediaPlayerUtil mediaPlayerUtil;
 
     public CharacterViewAdapter(Context context, List<String> itemList) {
         this.itemList = itemList;
         this.context = context;
-        mp = MediaPlayer.create(context, R.raw.button_sound);
-        mp.setOnCompletionListener(this);
         androidColors = context.getResources().getIntArray(R.array.color_array);
-
+        mediaPlayerUtil = new MediaPlayerUtil(context);
     }
 
     @Override
@@ -65,11 +65,11 @@ public class CharacterViewAdapter extends RecyclerView.Adapter<CharacterViewAdap
         mediaPlayer.release();
     }
 
-    public class RecyclerViewHolders extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class RecyclerViewHolders extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         public TextView name;
 
-        public RecyclerViewHolders(View itemView) {
+        RecyclerViewHolders(View itemView) {
             super(itemView);
             name = (TextView) itemView.findViewById(R.id.name);
             name.setOnClickListener(this);
@@ -77,7 +77,7 @@ public class CharacterViewAdapter extends RecyclerView.Adapter<CharacterViewAdap
 
         @Override
         public void onClick(View view) {
-            playSoundButton();
+            mediaPlayerUtil.playSoundButton(context);
             AlphaAnimation click = new AlphaAnimation(1F, 0.4F);
             click.setDuration(500);
             view.startAnimation(click);
@@ -98,19 +98,6 @@ public class CharacterViewAdapter extends RecyclerView.Adapter<CharacterViewAdap
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClicks(View view, int position);
-    }
-
-    private void playSoundButton() {
-        try {
-            if (mp.isPlaying()) {
-                mp.stop();
-                mp.release();
-                mp = MediaPlayer.create(context, R.raw.button_sound);
-            }
-            mp.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**

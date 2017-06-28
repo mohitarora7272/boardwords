@@ -2,16 +2,19 @@ package com.boardwords;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.Typeface;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -40,17 +43,18 @@ import com.boardwords.adapters.FoldingCellListAdapter;
 import com.boardwords.adapters.RecyclerViewAdapter;
 import com.boardwords.adapters.TimeAdapter;
 import com.boardwords.interfaces.Constant;
-import com.boardwords.interfaces.RestClient;
 import com.boardwords.modal.ItemObject;
 import com.boardwords.modal.TimeOption;
-import com.boardwords.modal.WordsApi;
 import com.boardwords.modal.WordsPOJO;
 import com.boardwords.preference.Preference;
+import com.boardwords.utils.AnimationUtil;
+import com.boardwords.utils.KeyboardUtils;
+import com.boardwords.utils.MediaPlayerUtil;
 import com.boardwords.utils.TextViewUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.ramotion.foldingcell.FoldingCell;
+import com.varunest.sparkbutton.SparkButton;
 import com.yarolegovich.lovelydialog.LovelyChoiceDialog;
 import com.yarolegovich.lovelydialog.LovelyStandardDialog;
 import com.yarolegovich.lovelydialog.LovelyTextInputDialog;
@@ -65,15 +69,10 @@ import java.util.regex.Pattern;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
+@SuppressWarnings("ALL")
 public class MainActivity extends AppCompatActivity implements Constant,
-        RecyclerViewAdapter.ItemClickListener, CharacterViewAdapter.ItemClickListener,
-        MediaPlayer.OnCompletionListener {
+        RecyclerViewAdapter.ItemClickListener, CharacterViewAdapter.ItemClickListener {
 
     @BindView(R.id.tvCharacter)
     TextView tvCharacter;
@@ -93,8 +92,35 @@ public class MainActivity extends AppCompatActivity implements Constant,
     @BindView(R.id.relative_list)
     RelativeLayout relative_list;
 
+    //@BindView(R.id.adView)
+    //AdView mAdView;
+
     @BindView(R.id.img_backspace)
     ImageButton img_backspace;
+
+    @BindView(R.id.btnStar)
+    SparkButton btnStar;
+
+    @BindView(R.id.btnThumb)
+    SparkButton btnThumb;
+
+    @BindView(R.id.btnTrophy)
+    SparkButton btnTrophy;
+
+    @BindView(R.id.btnStart)
+    SparkButton btnStart;
+
+    @BindView(R.id.btnRecords)
+    SparkButton btnRecords;
+
+    @BindView(R.id.btnNewGame)
+    SparkButton btnNewGame;
+
+    @BindView(R.id.btnTimeOut)
+    SparkButton btnTimeOut;
+
+    @BindView(R.id.relateButtons)
+    RelativeLayout relateButtons;
 
     @SuppressLint("StaticFieldLeak")
     private static MainActivity mActivity;
@@ -113,9 +139,9 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     private List<String> characterList;
 
-    private List<String> allcharacterList;
+    private List<String> allCharacterList;
 
-    private MediaPlayer mp;
+    private MediaPlayerUtil mpUtil;
 
     public static MainActivity getInstance() {
         return mActivity;
@@ -123,16 +149,26 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     private ArrayList<WordsPOJO> c_List;
 
+    //private InterstitialAd mInterstitialAd;
+
+    private KeyboardUtils keyboardUtils;
+
+    private AnimationUtil animationUtil;
+
+    private Boolean isFirstTime = true;
+
+    private String text = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // First Getting Array List From Assets Folder
-        allcharacterList = getAllCharacterList();
+        allCharacterList = getAllCharacterList();
 
         setContentView(R.layout.activity_main);
 
-        /* Retrieve the useful instance variables */
+        // Retrieve the useful instance variables
         mActivity = MainActivity.this;
 
         ButterKnife.bind(this);
@@ -148,17 +184,18 @@ public class MainActivity extends AppCompatActivity implements Constant,
             setActionBarTitle(getString(R.string.app_name));
         }
 
+        // Initialize Animation and Keyboard Utilities
+        animationUtil = new AnimationUtil(this);
+        keyboardUtils = new KeyboardUtils();
+
         // Start First List
-        List<ItemObject> wordsList = getAllItemList();
-        //Collections.shuffle(wordsList);
+        List<ItemObject> wordsList = keyboardUtils.getListQwerty();
         GridLayoutManager lLayout = new GridLayoutManager(MainActivity.this, 6);
 
         rView.setHasFixedSize(true);
         rView.setLayoutManager(lLayout);
 
-        rcAdapter = new RecyclerViewAdapter(MainActivity.this, wordsList);
-        rcAdapter.setClickListener(this);
-        rView.setAdapter(rcAdapter);
+        setAdapterForWords(wordsList);
 
         // Start Second List
         characterList = new ArrayList<>();
@@ -171,56 +208,51 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
         setRating();
 
-        mp = MediaPlayer.create(this, R.raw.button_sound);
-        mp.setOnCompletionListener(this);
+        mpUtil = new MediaPlayerUtil(this);
 
         c_List = new ArrayList<>();
 
         if (Preference.getList(this) != null && Preference.getList(this).size() > 0) {
             c_List = Preference.getList(this);
         }
-    }
 
-    @Override
-    public void onCompletion(MediaPlayer mediaPlayer) {
-        mediaPlayer.reset();
-        mediaPlayer.release();
+        // Show Banner Ad Here...
+        // showBannerAd();
     }
 
     @OnClick(R.id.img_cancel)
     public void cancel() {
-        playSoundButton();
-        if (getMenuTitle().equals(getString(R.string.time) + " " + getString(R.string.time00))) {
-
-            showTimerMessage("");
-
-        } else if (getMenuTitle().equals(getString(R.string.time_out))) {
-
-            showTimerMessage("");
-
-        } else {
-
-            startTimer();
-
-        }
-
-        if (Preference.getBoardName(this) != null &&
-                !Preference.getBoardName(this).equals("")) {
-
-            setActionBarTitle(Preference.getBoardName(this));
-
-        } else {
-
-            setActionBarTitle(getString(R.string.app_name));
-
+        if (menu != null) {
+            showKeyboardMenu(menu);
+            showTimeMenu(menu);
         }
 
         relative_list.setVisibility(View.GONE);
+
+        if (Preference.getBoardName(this) != null &&
+                !Preference.getBoardName(this).equals("")) {
+            setActionBarTitle(Preference.getBoardName(this));
+        } else {
+            setActionBarTitle(getString(R.string.app_name));
+        }
+
+        if (Preference.getRatingStar(this) >= 5) {
+            showMessageCongratulationRatingDone();
+            return;
+        }
+
+        if (getMenuTitle().equals(getString(R.string.time) + " " + getString(R.string.time00))) {
+            showTimerMessage("");
+        } else if (getMenuTitle().equals(getString(R.string.time_out))) {
+            showTimerMessage("");
+        } else {
+            hideButtonAnimations();
+            startTimer();
+        }
     }
 
     @OnClick(R.id.img_backspace)
     public void backSpace() {
-        playSoundButton();
         if (tvCharacter.getText() != null && tvCharacter.getText().toString().length() > 0) {
             TextViewUtil.removeText(tvCharacter);
             checkMatchCharacterInDataBase();
@@ -229,18 +261,135 @@ public class MainActivity extends AppCompatActivity implements Constant,
         }
     }
 
-    // Play Sound Button
-    private void playSoundButton() {
-        try {
-            if (mp.isPlaying()) {
-                mp.stop();
-                mp.release();
-                mp = MediaPlayer.create(this, R.raw.button_sound);
-            }
-            mp.start();
-        } catch (Exception e) {
-            e.printStackTrace();
+    @OnClick(R.id.btnStart)
+    public void btnStart() {
+        isFirstTime = false;
+        mpUtil.playSoundButton(this);
+        animationUtil.slideOutDown(btnStart);
+        relateButtons.setVisibility(View.GONE);
+        btnStart.setVisibility(View.GONE);
+        invalidateOptionsMenu();
+    }
+
+    @OnClick(R.id.btnStar)
+    public void btnStar() {
+        mpUtil.playSoundButton(this);
+        animationUtil.slideOutDown(btnStar);
+        relateButtons.setVisibility(View.GONE);
+        btnStar.setVisibility(View.GONE);
+
+        if (Preference.getRatingStar(MainActivity.this) == -1) {
+            ratingBar.setRating(1);
+            Preference.setRatingStar(MainActivity.this, 1);
+        } else {
+            int rateStar = Preference.getRatingStar(this);
+            rateStar++;
+            Preference.setRatingStar(MainActivity.this, rateStar);
+            ratingBar.setRating(rateStar);
         }
+
+        if (Preference.getRatingStar(MainActivity.this) >= 5) {
+            showMessageCongratulationRatingDone();
+            return;
+        }
+
+        Preference.setTimeOutRating(MainActivity.this, 0);
+        Preference.setBoardName(MainActivity.this, "");
+        Preference.setBoardTime(MainActivity.this, -1);
+        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
+        tvCharacter.setText("");
+        img_backspace.setVisibility(View.GONE);
+        tvCharacter.setBackgroundResource(0);
+        tvCharacter.setTextColor(Color.parseColor("#000000"));
+        characterList.clear();
+        setAdapterForCharacters(characterList);
+        invalidateOptionsMenu();
+    }
+
+    @OnClick(R.id.btnThumb)
+    public void btnThumb() {
+        mpUtil.playSoundButton(this);
+        animationUtil.slideOutDown(btnThumb);
+        relateButtons.setVisibility(View.GONE);
+        btnThumb.setVisibility(View.GONE);
+
+        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
+        tvCharacter.setText("");
+        img_backspace.setVisibility(View.GONE);
+        tvCharacter.setBackgroundResource(0);
+        tvCharacter.setTextColor(Color.parseColor("#000000"));
+        invalidateOptionsMenu();
+    }
+
+    @OnClick(R.id.btnTrophy)
+    public void btnTrophy() {
+        mpUtil.playSoundButton(this);
+        btnTrophy.playAnimation();
+        relateButtons.setVisibility(View.VISIBLE);
+        btnTrophy.setVisibility(View.VISIBLE);
+        btnRecords.setVisibility(View.VISIBLE);
+        btnNewGame.setVisibility(View.VISIBLE);
+    }
+
+    @OnClick(R.id.btnRecords)
+    public void btnRecords() {
+        mpUtil.playSoundButton(this);
+        animationUtil.slideInUp(btnTrophy);
+        animationUtil.slideOutLeft(btnNewGame);
+        animationUtil.slideOutRight(btnRecords);
+
+        relateButtons.setVisibility(View.GONE);
+        btnRecords.setVisibility(View.GONE);
+        btnTrophy.setVisibility(View.GONE);
+        btnNewGame.setVisibility(View.GONE);
+        if (menu != null) {
+            hideKeyboardMenu(menu);
+            hideTimeMenu(menu);
+        }
+        hideButtonAnimations();
+        showRecords();
+    }
+
+    @OnClick(R.id.btnNewGame)
+    public void btnNewGame() {
+        mpUtil.playSoundButton(this);
+        animationUtil.slideOutDown(btnTrophy);
+        animationUtil.slideOutLeft(btnNewGame);
+        animationUtil.slideOutRight(btnRecords);
+
+        relateButtons.setVisibility(View.GONE);
+        btnRecords.setVisibility(View.GONE);
+        btnTrophy.setVisibility(View.GONE);
+        btnNewGame.setVisibility(View.GONE);
+
+        c_List.clear();
+        Preference.saveList(MainActivity.this, c_List);
+        stopTimer();
+        Preference.setTimeOutRating(MainActivity.this, 0);
+        Preference.setRatingStar(MainActivity.this, -1);
+        Preference.setBoardName(MainActivity.this, "");
+        Preference.setBoardTime(MainActivity.this, -1);
+        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
+        setActionBarTitle(getString(R.string.app_name));
+        ratingBar.setRating(0);
+        tvCharacter.setText("");
+        img_backspace.setVisibility(View.GONE);
+        tvCharacter.setBackgroundResource(0);
+        tvCharacter.setTextColor(Color.parseColor("#000000"));
+        characterList.clear();
+        setAdapterForCharacters(characterList);
+        isFirstTime = true;
+        invalidateOptionsMenu();
+    }
+
+    @OnClick(R.id.btnTimeOut)
+    public void btnTimeOut() {
+        mpUtil.playSoundButton(this);
+        animationUtil.slideOutDown(btnTimeOut);
+        relateButtons.setVisibility(View.GONE);
+        btnTimeOut.setVisibility(View.GONE);
+        setTimeOutRating(text);
+        invalidateOptionsMenu();
     }
 
     // Set Rating
@@ -266,9 +415,9 @@ public class MainActivity extends AppCompatActivity implements Constant,
     }
 
     // Load JSON From Asset
-    public final static String loadJSONFromAsset(final Context context) throws Exception {
-        String json = null;
-        InputStream is = context.getAssets().open("words.json");
+    public static String loadJSONFromAsset(final Context context) throws Exception {
+        String json;
+        InputStream is = context.getAssets().open("generated.json");
         int size = is.available();
         byte[] buffer = new byte[size];
         is.read(buffer);
@@ -284,9 +433,16 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Set Adapter For Characters
     private void setAdapterForCharacters(List<String> characterList) {
-        chAdapter = new CharacterViewAdapter(MainActivity.this, characterList);
+        chAdapter = new CharacterViewAdapter(this, characterList);
         chAdapter.setClickListener(this);
         recycler_view_horizontal.setAdapter(chAdapter);
+    }
+
+    // Set Adapter For Words
+    private void setAdapterForWords(List<ItemObject> wordsList) {
+        rcAdapter = new RecyclerViewAdapter(this, wordsList);
+        rcAdapter.setClickListener(this);
+        rView.setAdapter(rcAdapter);
     }
 
     // Set ActionBar Title
@@ -296,50 +452,42 @@ public class MainActivity extends AppCompatActivity implements Constant,
         ab.setIcon(R.drawable.bw_icon);
     }
 
-    // GetAllItemList
-    private List<ItemObject> getAllItemList() {
-
-        List<ItemObject> allItems = new ArrayList<>();
-        allItems.add(new ItemObject("A", R.color.md_red_500));
-        allItems.add(new ItemObject("B", R.color.md_pink_500));
-        allItems.add(new ItemObject("C", R.color.md_purple_500));
-        allItems.add(new ItemObject("D", R.color.md_deep_purple_500));
-        allItems.add(new ItemObject("E", R.color.md_indigo_500));
-        allItems.add(new ItemObject("F", R.color.md_blue_500));
-        allItems.add(new ItemObject("G", R.color.md_light_blue_500));
-        allItems.add(new ItemObject("H", R.color.md_cyan_500));
-        allItems.add(new ItemObject("I", R.color.md_teal_500));
-        allItems.add(new ItemObject("J", R.color.md_green_500));
-        allItems.add(new ItemObject("K", R.color.md_light_green_500));
-        allItems.add(new ItemObject("L", R.color.md_lime_500));
-        allItems.add(new ItemObject("M", R.color.md_yellow_500));
-        allItems.add(new ItemObject("N", R.color.md_amber_500));
-        allItems.add(new ItemObject("O", R.color.md_orange_500));
-        allItems.add(new ItemObject("P", R.color.md_deep_orange_500));
-        allItems.add(new ItemObject("Q", R.color.md_brown_500));
-        allItems.add(new ItemObject("R", R.color.md_grey_500));
-        allItems.add(new ItemObject("S", R.color.md_blue_grey_500));
-        allItems.add(new ItemObject("T", R.color.md_red_500));
-        allItems.add(new ItemObject("U", R.color.md_pink_500));
-        allItems.add(new ItemObject("V", R.color.md_purple_500));
-        allItems.add(new ItemObject("W", R.color.md_deep_purple_500));
-        allItems.add(new ItemObject("X", R.color.md_indigo_500));
-        allItems.add(new ItemObject("Y", R.color.md_blue_500));
-        allItems.add(new ItemObject("Z", R.color.md_light_blue_500));
-
-        return allItems;
-    }
-
     // onCreateOptionsMenu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);//Menu Resource, Menu
-
         showHideMenuList(menu);
-
         menuTime = menu.findItem(R.id.time);
         menuTime.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
+
+        if (Preference.getRatingStar(this) >= 5) {
+            showMessageCongratulationRatingDone();
+            return true;
+        }
+
+        if (isFirstTime) {
+            relateButtons.setVisibility(View.VISIBLE);
+            btnStart.setVisibility(View.VISIBLE);
+            animationUtil.slideInUp(btnStart);
+            return true;
+        }
+
+        if (Preference.getBoardName(this).equals("") && Preference.getBoardTime(this) == -1) {
+            showDialogForBoardName();
+            return true;
+        }
+
+        if (Preference.getBoardTime(this) != -1) {
+            updateTime(menu, Preference.getBoardTime(this));
+            return super.onPrepareOptionsMenu(menu);
+        }
+
+        if (Preference.getBoardTime(this) == -1) {
+            showDialogForTime();
+            return true;
+        }
         return true;
     }
 
@@ -354,42 +502,93 @@ public class MainActivity extends AppCompatActivity implements Constant,
         }
     }
 
+    // Show Keyboard Menu List Item
+    private void showKeyboardMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.keyboard);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(true);
+    }
+
+    // Hide Keyboard Menu List Item
+    private void hideKeyboardMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.keyboard);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(false);
+    }
+
+    // Show Keyboard Menu List Item
+    private void showTimeMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.time);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(true);
+    }
+
+    // Hide Keyboard Menu List Item
+    private void hideTimeMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.time);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(false);
+    }
+
     // onOptionsItemSelected
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.time:
-                if (getMenuTitle().equals(getString(R.string.time) + " " + getString(R.string.time00))) {
-
-                    showTimerMessage("");
-
-                } else if (getMenuTitle().equals(getString(R.string.time_out))) {
-
-                    showTimerMessage("");
-
-                } else {
-
-                    startTimer();
-
-                }
-
                 if (Preference.getBoardName(this) != null &&
                         !Preference.getBoardName(this).equals("")) {
-
                     setActionBarTitle(Preference.getBoardName(this));
-
                 } else {
                     setActionBarTitle(getString(R.string.app_name));
                 }
 
                 relative_list.setVisibility(View.GONE);
 
+                if (Preference.getRatingStar(this) >= 5) {
+                    showMessageCongratulationRatingDone();
+                    return true;
+                }
+
+                if (isFirstTime) {
+                    relateButtons.setVisibility(View.VISIBLE);
+                    btnStart.setVisibility(View.VISIBLE);
+                    animationUtil.slideInUp(btnStart);
+                    return true;
+                }
+
+                if (getMenuTitle().equals(getString(R.string.time) + " " + getString(R.string.time00))) {
+                    showTimerMessage("");
+                } else if (getMenuTitle().equals(getString(R.string.time_out))) {
+                    showTimerMessage("");
+                } else {
+                    hideButtonAnimations();
+                    stopTimer();
+                    showDialogForTime();
+                }
                 return true;
 
             case R.id.board_list:
-
+                if (menu != null) {
+                    hideKeyboardMenu(menu);
+                    hideTimeMenu(menu);
+                }
+                hideButtonAnimations();
                 showRecords();
+                return true;
 
+            case R.id.keyboard:
+                return true;
+
+            case R.id.aToZ:
+                setAdapterForWords(keyboardUtils.getListAlphabets());
+                return true;
+
+            case R.id.qwerty:
+                setAdapterForWords(keyboardUtils.getListQwerty());
+                return true;
+
+            case R.id.shuffle:
+                setAdapterForWords(keyboardUtils.getListShuffle());
                 return true;
 
             default:
@@ -397,11 +596,26 @@ public class MainActivity extends AppCompatActivity implements Constant,
         }
     }
 
+    // Hide Button Animations
+    private void hideButtonAnimations() {
+        tvCharacter.setText("");
+        img_backspace.setVisibility(View.GONE);
+        tvCharacter.setBackgroundResource(0);
+        tvCharacter.setTextColor(Color.parseColor("#000000"));
+        relateButtons.setVisibility(View.GONE);
+        btnStar.setVisibility(View.GONE);
+        btnThumb.setVisibility(View.GONE);
+        btnTrophy.setVisibility(View.GONE);
+        btnRecords.setVisibility(View.GONE);
+        btnNewGame.setVisibility(View.GONE);
+        btnStart.setVisibility(View.GONE);
+        btnTimeOut.setVisibility(View.GONE);
+    }
+
     // Show Records
     private void showRecords() {
         if (c_List != null && c_List.size() > 0) {
             stopTimer();
-
             setActionBarTitle(getString(R.string.board_words_list));
 
             if (Preference.getList(this) != null && Preference.getList(this).size() > 0) {
@@ -417,31 +631,10 @@ public class MainActivity extends AppCompatActivity implements Constant,
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         this.menu = menu;
-        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
-        showHideMenuList(menu);
-
-        if (Preference.getRatingStar(this) >= 5) {
-            showMessageCongratulationRatingDone();
-            return super.onPrepareOptionsMenu(menu);
+        if (menu != null) {
+            showKeyboardMenu(menu);
+            showTimeMenu(menu);
         }
-
-        if (Preference.getBoardName(this).equals("") && Preference.getBoardTime(this) == -1) {
-            showDialogForBoardName();
-            return super.onPrepareOptionsMenu(menu);
-        }
-
-        if (Preference.getBoardTime(this) != -1) {
-
-            updateTime(menu, Preference.getBoardTime(this));
-            return super.onPrepareOptionsMenu(menu);
-        }
-
-        if (Preference.getBoardTime(this) == -1) {
-
-            showDialogForTime();
-            return super.onPrepareOptionsMenu(menu);
-        }
-
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -509,68 +702,24 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // On Item Click On Characters
     @Override
     public void onItemClick(View view, int position) {
+        if (Preference.getRatingStar(this) >= 5) {
+            showMessageCongratulationRatingDone();
+            return;
+        }
         img_backspace.setVisibility(View.VISIBLE);
         TextViewUtil.appendText(tvCharacter, rcAdapter.getItem(position));
-        //checkCharacterRequest(tvCharacter.getText().toString().toLowerCase());
         new CheckCharacter().execute();
     }
 
-    private void checkCharacterRequest(String text) {
-        Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-                .create();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(ROOT + text + "/")
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-
-        RestClient restClient = retrofit.create(RestClient.class);
-        Call<WordsApi> call = restClient.wordsRequest();
-
-        Callback<WordsApi> callback = new Callback<WordsApi>() {
-
-            @Override
-            public void onResponse(Call<WordsApi> call, Response<WordsApi> response) {
-                WordsApi wordsApi = response.body();
-                Log.e("wordsApi","wordsApi?"+wordsApi);
-                int code = response.code();
-                if (code == RESPONSE_CODE) {
-                    if(wordsApi.getWord().equals(tvCharacter.getText().toString().toLowerCase())){
-                        Log.e("equal","equal?");
-                    }else{
-                        Log.e("equal","not?");
-                    }
-
-
-                } else {
-                    Log.e("equal","nottt?"+code);
-
-                }
-            }
-
-            @Override
-            public void onFailure(Call<WordsApi> call, Throwable t) {
-                Log.e("onFailure", "onFailure?? " + t.getMessage());
-
-            }
-        };
-
-        call.enqueue(callback);
-
-    }
-
     // Check Character Async Task
-    public class CheckCharacter extends AsyncTask<Void, Void, Void> {
+    private class CheckCharacter extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... voids) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-
                     checkMatchCharacterInDataBase();
-
                 }
             });
 
@@ -580,7 +729,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Check Match Characters In DataBase
     private void checkMatchCharacterInDataBase() {
-        for (String text : allcharacterList) {
+        for (String text : allCharacterList) {
             if (text.toLowerCase().equals(tvCharacter.getText().toString().toLowerCase())) {
 
                 stopTimer();
@@ -588,10 +737,12 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 //tvCharacter.setTextColor(Color.parseColor("#FFFFFF"));
                 setSpanText(tvCharacter.getText().toString());
 
-                if (characterList != null) {
+                if (characterList != null && characterList.size() < 10) {
                     characterList.add(text.toUpperCase());
                     setAdapterForCharacters(characterList);
                 }
+
+                Log.e("ss", "ss>>" + characterList.size());
 
                 if (characterList != null && characterList.size() == 10) {
                     setWholeBoardList(Preference.getBoardName(this), (ArrayList<String>) characterList);
@@ -600,11 +751,9 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 }
 
                 showMessageCongratulation();
-
                 break;
 
             } else {
-
                 tvCharacter.setBackgroundResource(0);
                 tvCharacter.setTextColor(Color.parseColor("#000000"));
             }
@@ -613,34 +762,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Timer Message
     public void showTimerMessage(final String text) {
-        playSoundButton();
-        new LovelyStandardDialog(this)
-                .setCancelable(true)
-                .setTopColorRes(R.color.colorPrimary)
-                .setTopTitleColor(R.color.md_white_1000)
-                .setIcon(R.drawable.ic_access_time_white_24dp)
-                .setTopTitle(R.string.time_out)
-                .setMessage(R.string.timer_message)
-                .setMessageGravity(Gravity.CENTER)
-                .setNegativeButtonColor(getResources().getColor(R.color.colorAccent))
-                .setPositiveButtonColor(getResources().getColor(R.color.colorAccent))
-                .setPositiveButton(R.string.start, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        setTimeOutRating(text);
-                        playSoundButton();
-                        invalidateOptionsMenu();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        setTimeOutRating(text);
-                        playSoundButton();
-                    }
-                })
-                .show();
+        this.text = text;
+        mpUtil.playSoundButton(this);
+        relateButtons.setVisibility(View.VISIBLE);
+        btnTimeOut.setVisibility(View.VISIBLE);
+        animationUtil.slideInUp(btnTimeOut);
     }
 
     // Set TimeOut Rating
@@ -657,9 +783,9 @@ public class MainActivity extends AppCompatActivity implements Constant,
         }
     }
 
-    // Show Dialog For BoardName
+    // Show Dialog For Board Name
     private void showDialogForBoardName() {
-        playSoundButton();
+        mpUtil.playSoundButton(this);
         new LovelyTextInputDialog(this)
                 .setCancelable(false)
                 .setTopColorRes(R.color.colorPrimary)
@@ -675,7 +801,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
                     @Override
                     public void onTextInputConfirmed(String text) {
-                        playSoundButton();
 
                         // Set Action Bar Title With Board Name
                         setActionBarTitle(text);
@@ -692,7 +817,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Dialog For Time
     private void showDialogForTime() {
-        playSoundButton();
+        mpUtil.playSoundButton(this);
         // Follow Link:- https://android-arsenal.com/details/1/3452
         ArrayAdapter<TimeOption> adapter = new TimeAdapter(this, loadTimeOptions());
         new LovelyChoiceDialog(this)
@@ -704,7 +829,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 .setItems(adapter, new LovelyChoiceDialog.OnItemSelectedListener<TimeOption>() {
                     @Override
                     public void onItemSelected(int position, TimeOption item) {
-                        playSoundButton();
 
                         if (item.time.equals(getString(R.string.Sec10))) {
                             updateTime(menu, TIME_INTERVAL_10_SEC);
@@ -733,124 +857,30 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message
     private void showMessageCongratulation() {
-        playSoundButton();
-        new LovelyStandardDialog(this)
-                .setCancelable(false)
-                .setTopColorRes(R.color.colorPrimary)
-                .setTopTitleColor(R.color.md_white_1000)
-                .setIcon(R.drawable.ic_check_circle_white_24dp)
-                .setTopTitle(R.string.congratulation)
-                .setMessageGravity(Gravity.CENTER)
-                .setMessage(R.string.congratulation_message)
-                .setPositiveButtonColor(getResources().getColor(R.color.colorAccent))
-                .setPositiveButton(R.string.next, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        playSoundButton();
-                        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
-                        tvCharacter.setText("");
-                        img_backspace.setVisibility(View.GONE);
-                        tvCharacter.setBackgroundResource(0);
-                        tvCharacter.setTextColor(Color.parseColor("#000000"));
-                        invalidateOptionsMenu();
-
-                    }
-                })
-                .show();
+        mpUtil.playSoundButton(this);
+        relateButtons.setVisibility(View.VISIBLE);
+        btnThumb.setVisibility(View.VISIBLE);
+        animationUtil.slideInUp(btnThumb);
     }
 
     // Show Congratulation Message For Make Next Board
     private void showMessageCongratulationNextBoard() {
-        playSoundButton();
-        new LovelyStandardDialog(this)
-                .setCancelable(false)
-                .setTopColorRes(R.color.colorPrimary)
-                .setTopTitleColor(R.color.md_white_1000)
-                .setIcon(R.drawable.ic_check_circle_white_24dp)
-                .setTopTitle(R.string.congratulation)
-                .setMessage(R.string.congratulation_message_complete_board)
-                .setMessageGravity(Gravity.CENTER)
-                .setPositiveButtonColor(getResources().getColor(R.color.colorAccent))
-                .setPositiveButton(R.string.next, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        playSoundButton();
-                        if (Preference.getRatingStar(MainActivity.this) == -1) {
-                            ratingBar.setRating(1);
-                            Preference.setRatingStar(MainActivity.this, 1);
-                        } else {
-                            int rateStar = Preference.getRatingStar(MainActivity.this);
-                            rateStar++;
-                            Preference.setRatingStar(MainActivity.this, rateStar);
-                            ratingBar.setRating(rateStar);
-                        }
-
-                        if (Preference.getRatingStar(MainActivity.this) >= 5) {
-
-                            showMessageCongratulationRatingDone();
-                            return;
-                        }
-
-                        Preference.setTimeOutRating(MainActivity.this, 0);
-                        Preference.setBoardName(MainActivity.this, "");
-                        Preference.setBoardTime(MainActivity.this, -1);
-                        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
-                        tvCharacter.setText("");
-                        img_backspace.setVisibility(View.GONE);
-                        tvCharacter.setBackgroundResource(0);
-                        tvCharacter.setTextColor(Color.parseColor("#000000"));
-                        characterList.clear();
-                        setAdapterForCharacters(characterList);
-                        invalidateOptionsMenu();
-                    }
-                })
-                .show();
+        mpUtil.playSoundButton(this);
+        relateButtons.setVisibility(View.VISIBLE);
+        btnStar.setVisibility(View.VISIBLE);
+        animationUtil.slideInUp(btnStar);
     }
 
     // Show Congratulation Message When 5 Star Rating is Done
     private void showMessageCongratulationRatingDone() {
-        playSoundButton();
-        new LovelyStandardDialog(this)
-                .setCancelable(false)
-                .setTopColorRes(R.color.colorPrimary)
-                .setTopTitleColor(R.color.md_white_1000)
-                .setIcon(R.drawable.ic_stars_white_24dp)
-                .setTopTitle(R.string.level)
-                .setMessage(R.string.congratulation_message_complete_five_star)
-                .setMessageGravity(Gravity.CENTER)
-                .setPositiveButtonColor(getResources().getColor(R.color.colorAccent))
-                .setNegativeButtonColor(getResources().getColor(R.color.colorAccent))
-                .setPositiveButton(R.string.new_game, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        c_List.clear();
-                        Preference.saveList(MainActivity.this, c_List);
-                        playSoundButton();
-                        stopTimer();
-                        Preference.setTimeOutRating(MainActivity.this, 0);
-                        Preference.setRatingStar(MainActivity.this, -1);
-                        Preference.setBoardName(MainActivity.this, "");
-                        Preference.setBoardTime(MainActivity.this, -1);
-                        setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
-                        setActionBarTitle(getString(R.string.app_name));
-                        ratingBar.setRating(0);
-                        tvCharacter.setText("");
-                        img_backspace.setVisibility(View.GONE);
-                        tvCharacter.setBackgroundResource(0);
-                        tvCharacter.setTextColor(Color.parseColor("#000000"));
-                        characterList.clear();
-                        setAdapterForCharacters(characterList);
-                        invalidateOptionsMenu();
-
-                    }
-                })
-                .setNegativeButton(R.string.board_words_list, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        showRecords();
-                    }
-                })
-                .show();
+        mpUtil.playSoundButton(this);
+        relateButtons.setVisibility(View.VISIBLE);
+        btnTrophy.setVisibility(View.VISIBLE);
+        btnRecords.setVisibility(View.VISIBLE);
+        btnNewGame.setVisibility(View.VISIBLE);
+        animationUtil.slideInUp(btnTrophy);
+        animationUtil.slideInRight(btnRecords);
+        animationUtil.slideInLeft(btnNewGame);
     }
 
     // Show Dialog For Exit
@@ -876,8 +906,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // On Item Click On Words
     @Override
     public void onItemClicks(View view, int position) {
-        Log.e("ss", "ss???" + chAdapter.getItem(position));
-        //view.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_in_left));
     }
 
     // Set Span Text Rainbow Animation On Text
@@ -899,14 +927,13 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
             }
         });
-
     }
 
     // Rainbow Span
     private static class RainbowSpan extends CharacterStyle implements UpdateAppearance {
         private final int[] colors;
 
-        public RainbowSpan(Context context) {
+        RainbowSpan(Context context) {
             colors = context.getResources().getIntArray(R.array.color_array);
         }
 
@@ -1007,6 +1034,128 @@ public class MainActivity extends AppCompatActivity implements Constant,
         });
     }
 
+    // Share Bitmap Image
+    public static void shareBitmap(Context ctx, Bitmap bitmap, String fileName) {
+        try {
+            String pathofBmp = MediaStore.Images.Media.insertImage(ctx.getContentResolver(), bitmap, fileName, null);
+            Uri bmpUri = Uri.parse(pathofBmp);
+
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+            intent.setType("image/png");
+            ctx.startActivity(Intent.createChooser(intent, "Share Using..."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("Exception", "Exception>>>" + e.getMessage());
+        }
+    }
+
+//    // Show Banner Ads
+//    private void showBannerAd() {
+//        mAdView.loadAd(new AdRequest.Builder().build());
+//        mAdView.setAdListener(new AdListener() {
+//            public void onAdLoaded() {
+//                Log.e("Banner", "onAdLoaded");
+//            }
+//
+//            @Override
+//            public void onAdClosed() {
+//                Log.e("Banner", "onAdClosed");
+//            }
+//
+//            @Override
+//            public void onAdFailedToLoad(int errorCode) {
+//                Log.e("Banner", "onAdFailedToLoad>>" + errorCode);
+//            }
+//
+//            @Override
+//            public void onAdLeftApplication() {
+//                Log.e("Banner", "onAdLeftApplication");
+//            }
+//
+//            @Override
+//            public void onAdOpened() {
+//                Log.e("Banner", "onAdOpened");
+//            }
+//        });
+//    }
+//
+//    // Initialize InterstitialAd
+//    private void initInterstitialAd() {
+//        mInterstitialAd = new InterstitialAd(this);
+//        // set the ad unit ID
+//        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
+//        loadInterstitialAds();
+//    }
+//
+//    // Show Interstitial Ads
+//    private void showInterstitial() {
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                // Show Ads
+//                if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
+//                    mInterstitialAd.show();
+//                } else {
+//                    loadInterstitialAds();
+//                }
+//            }
+//        });
+//
+//        mInterstitialAd.setAdListener(new AdListener() {
+//            public void onAdLoaded() {
+//                Log.e("Interstitial", "onAdLoaded");
+//            }
+//
+//            @Override
+//            public void onAdClosed() {
+//                Log.e("Interstitial", "onAdClosed");
+//                // Load the next interstitial.
+//                loadInterstitialAds();
+//            }
+//
+//            @Override
+//            public void onAdFailedToLoad(int errorCode) {
+//                Log.e("Interstitial", "onAdFailedToLoad>>" + errorCode);
+//            }
+//
+//            @Override
+//            public void onAdLeftApplication() {
+//                Log.e("Interstitial", "onAdLeftApplication");
+//            }
+//
+//            @Override
+//            public void onAdOpened() {
+//                Log.e("Interstitial", "onAdOpened");
+//            }
+//        });
+//    }
+//
+//    // Load Interstitial Ads
+//    private void loadInterstitialAds() {
+//        // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
+//        if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
+//            mInterstitialAd.loadAd(new AdRequest.Builder().build());
+//        }
+//    }
+//
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        if (mAdView != null) {
+//            mAdView.resume();
+//        }
+//    }
+//
+//    @Override
+//    public void onPause() {
+//        super.onPause();
+//        if (mAdView != null) {
+//            mAdView.pause();
+//        }
+//    }
+
     // onBackPressed
     @Override
     public void onBackPressed() {
@@ -1019,5 +1168,12 @@ public class MainActivity extends AppCompatActivity implements Constant,
         super.onDestroy();
         Preference.setBoardTime(this, -1);
         stopTimer();
+
+//        if (mAdView != null) {
+//            mAdView.destroy();
+//        }
+//        if (mInterstitialAd != null) {
+//            mInterstitialAd = null;
+//        }
     }
 }

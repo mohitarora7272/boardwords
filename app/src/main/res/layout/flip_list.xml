@@ -6,15 +6,16 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:visibility="gone"
-    tools:context="com.boardwords.MainActivity">
+    tools:context="com.boardwords.MainActivity"
+    tools:ignore="Overdraw">
 
     <ListView
         android:id="@+id/mainListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="15dp"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:layout_margin="15dp"
         android:divider="@android:color/transparent"
         android:dividerHeight="5dp"
         android:scrollbars="none"
@@ -28,6 +29,15 @@
         android:background="@drawable/cancel_effect"
         android:contentDescription="@string/app_name"
         android:padding="15dp" />
+
+    <!--<com.google.android.gms.ads.AdView-->
+    <!--android:id="@+id/adView"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:layout_centerHorizontal="true"-->
+    <!--ads:adSize="BANNER"-->
+    <!--ads:adUnitId="@string/banner_home_footer" />-->
 
 </RelativeLayout>
 

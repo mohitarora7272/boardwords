@@ -2,7 +2,7 @@ package com.boardwords.adapters;
 
 import android.content.Context;
 import android.media.MediaPlayer;
-import android.util.Log;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.boardwords.R;
 import com.boardwords.modal.WordsPOJO;
+import com.boardwords.utils.MediaPlayerUtil;
 import com.ramotion.foldingcell.FoldingCell;
 
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import java.util.Random;
  * Simple example of ListAdapter for using with Folding Cell
  * Adapter holds indexes of unfolded elements for correct work with default reusable views behavior
  */
+@SuppressWarnings("ALL")
 public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements MediaPlayer.OnCompletionListener {
 
     private HashSet<Integer> unfoldedIndexes = new HashSet<>();
@@ -30,19 +32,19 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
     private Context context;
     private int[] androidColors;
     private List<WordsPOJO> listCh;
-    private MediaPlayer mp;
+    private MediaPlayerUtil mediaPlayerUtil;
 
     public FoldingCellListAdapter(Context context, List<WordsPOJO> listCh) {
         super(context, 0, listCh);
         this.context = context;
         this.listCh = listCh;
         androidColors = context.getResources().getIntArray(R.array.color_array);
-        mp = MediaPlayer.create(context, R.raw.button_sound);
-        mp.setOnCompletionListener(this);
+        mediaPlayerUtil = new MediaPlayerUtil(context);
     }
 
+    @NonNull
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, final View convertView, @NonNull ViewGroup parent) {
         // get item for selected view
         WordsPOJO item = listCh.get(position);
         // if cell is exists - reuse it, if not - create the new one from resource
@@ -133,90 +135,80 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("0", "One?" + item.getWordsList().get(0));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Two.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("1", "two?" + item.getWordsList().get(1));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Three.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("2", "two?" + item.getWordsList().get(2));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Four.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("3", "two?" + item.getWordsList().get(3));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Five.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("4", "two?" + item.getWordsList().get(4));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Six.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("5", "two?" + item.getWordsList().get(5));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Seven.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("6", "two?" + item.getWordsList().get(6));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Eight.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("7", "two?" + item.getWordsList().get(7));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Nine.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("8", "two?" + item.getWordsList().get(8));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         viewHolder.tv_Ten.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 WordsPOJO item = listCh.get(position);
-                Log.e("9", "two?" + item.getWordsList().get(9));
                 setAnimationClick(view);
-                playSoundButton();
+                mediaPlayerUtil.playSoundButton(context);
             }
         });
         return cell;
@@ -236,11 +228,11 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         mediaPlayer.release();
     }
 
-    public void registerFold(int position) {
+    private void registerFold(int position) {
         unfoldedIndexes.remove(position);
     }
 
-    public void registerUnfold(int position) {
+    private void registerUnfold(int position) {
         unfoldedIndexes.add(position);
     }
 
@@ -275,18 +267,5 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         TextView tv_Ten;
         RatingBar rating_all_Cell;
         RatingBar rating_all_Content;
-    }
-
-    private void playSoundButton() {
-        try {
-            if (mp.isPlaying()) {
-                mp.stop();
-                mp.release();
-                mp = MediaPlayer.create(context, R.raw.button_sound);
-            }
-            mp.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

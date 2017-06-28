@@ -15,26 +15,25 @@ import android.widget.Button;
 import com.boardwords.MainActivity;
 import com.boardwords.R;
 import com.boardwords.modal.ItemObject;
-import com.yarolegovich.lovelydialog.LovelyStandardDialog;
+import com.boardwords.utils.MediaPlayerUtil;
 
 import java.util.List;
 import java.util.Random;
 
+@SuppressWarnings("ALL")
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.RecyclerViewHolders> implements MediaPlayer.OnCompletionListener {
-
     private List<ItemObject> itemList;
     private Context context;
     private int[] androidColors;
     private ItemClickListener mClickListener;
     // Allows to remember the last item shown on screen
     private int lastPosition = -1;
-    private MediaPlayer mp;
+    private MediaPlayerUtil mediaPlayerUtil;
 
     public RecyclerViewAdapter(Context context, List<ItemObject> itemList) {
         this.itemList = itemList;
         this.context = context;
-        mp = MediaPlayer.create(context, R.raw.button_sound);
-        mp.setOnCompletionListener(this);
+        mediaPlayerUtil = new MediaPlayerUtil(context);
         if (itemList != null && itemList.size() > 0) {
             androidColors = new int[itemList.size()];
             for (int i = 0; i < itemList.size(); i++) {
@@ -45,7 +44,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public RecyclerViewHolders onCreateViewHolder(ViewGroup parent, int viewType) {
-
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view_list, null);
         RecyclerViewHolders rcv = new RecyclerViewHolders(layoutView);
         return rcv;
@@ -72,11 +70,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         mediaPlayer.release();
     }
 
-    public class RecyclerViewHolders extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class RecyclerViewHolders extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        public Button btnCharacter;
+        Button btnCharacter;
 
-        public RecyclerViewHolders(View itemView) {
+        RecyclerViewHolders(View itemView) {
             super(itemView);
             btnCharacter = (Button) itemView.findViewById(R.id.btnCharacter);
             btnCharacter.setOnClickListener(this);
@@ -84,7 +82,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
         @Override
         public void onClick(View view) {
-            playSoundButton();
+            mediaPlayerUtil.playSoundButton(context);
 
             if (MainActivity.getInstance().getMenuTitle().equals(context.getString(R.string.time) + " " + context.getString(R.string.time00))) {
                 MainActivity.getInstance().showTimerMessage("");
@@ -102,19 +100,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
             if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
 
-        }
-    }
-
-    private void playSoundButton() {
-        try {
-            if (mp.isPlaying()) {
-                mp.stop();
-                mp.release();
-                mp = MediaPlayer.create(context, R.raw.button_sound);
-            }
-            mp.start();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

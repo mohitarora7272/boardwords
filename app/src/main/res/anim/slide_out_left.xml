@@ -3,11 +3,11 @@
     android:fillAfter="true"
     android:fillEnabled="true">
     <translate
-        android:duration="@android:integer/config_mediumAnimTime"
+        android:duration="800"
         android:fromXDelta="0"
         android:toXDelta="-50%p" />
     <alpha
-        android:duration="@android:integer/config_mediumAnimTime"
+        android:duration="800"
         android:fromAlpha="1.0"
         android:toAlpha="0.0" />
 </set>

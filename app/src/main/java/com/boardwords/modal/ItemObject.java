@@ -1,6 +1,7 @@
 package com.boardwords.modal;
 
 
+@SuppressWarnings("ALL")
 public class ItemObject {
 
     private String name;

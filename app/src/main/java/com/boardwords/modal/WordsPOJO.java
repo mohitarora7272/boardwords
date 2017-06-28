@@ -5,6 +5,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("ALL")
 public class WordsPOJO {
 
     private String boardName;

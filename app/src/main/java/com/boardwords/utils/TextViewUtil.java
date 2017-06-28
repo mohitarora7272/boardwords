@@ -1,12 +1,10 @@
 package com.boardwords.utils;
 
 
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
+@SuppressWarnings("ALL")
 public class TextViewUtil {
     public static void appendText(TextView tv, String text) {
         tv.setText(tv.getText() + text);
@@ -29,7 +27,7 @@ public class TextViewUtil {
         tv.setText(method(tv.getText().toString()));
     }
 
-    public static String method(String str) {
+    private static String method(String str) {
         if (str != null && str.length() > 0) {
             str = str.substring(0, str.length() - 1);
         }

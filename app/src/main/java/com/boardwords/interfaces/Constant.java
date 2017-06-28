@@ -1,7 +1,7 @@
 package com.boardwords.interfaces;
 
 
-@SuppressWarnings("all")
+@SuppressWarnings("ALL")
 public interface Constant {
 
 
@@ -23,7 +23,4 @@ public interface Constant {
     int TIME_INTERVAL_20_SEC = 20000;
     int TIME_INTERVAL_1_SEC = 1000;
     int RESPONSE_CODE = 200;
-
-    String ROOT = "https://wordsapiv1.p.mashape.com/words/";
-
 }

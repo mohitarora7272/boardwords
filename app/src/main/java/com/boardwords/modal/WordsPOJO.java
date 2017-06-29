@@ -13,8 +13,7 @@ public class WordsPOJO {
     private View.OnClickListener requestBtnClickListener;
     private float averageRating;
 
-    public WordsPOJO() {
-    }
+    public WordsPOJO() {}
 
     public ArrayList<String> getWordsList() {
         return wordsList;

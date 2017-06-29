@@ -277,6 +277,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         animationUtil.slideOutDown(btnStar);
         relateButtons.setVisibility(View.GONE);
         btnStar.setVisibility(View.GONE);
+        setWholeBoardList(Preference.getBoardName(this), (ArrayList<String>) characterList);
 
         if (Preference.getRatingStar(MainActivity.this) == -1) {
             ratingBar.setRating(1);
@@ -745,7 +746,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 Log.e("ss", "ss>>" + characterList.size());
 
                 if (characterList != null && characterList.size() == 10) {
-                    setWholeBoardList(Preference.getBoardName(this), (ArrayList<String>) characterList);
                     showMessageCongratulationNextBoard();
                     return;
                 }

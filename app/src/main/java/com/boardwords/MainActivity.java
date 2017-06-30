@@ -2,7 +2,9 @@ package com.boardwords;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -15,7 +17,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,6 +31,7 @@ import android.text.style.StyleSpan;
 import android.text.style.UpdateAppearance;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,7 +41,9 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.boardwords.adapters.CharacterViewAdapter;
 import com.boardwords.adapters.FoldingCellListAdapter;
@@ -46,11 +53,13 @@ import com.boardwords.interfaces.Constant;
 import com.boardwords.modal.ItemObject;
 import com.boardwords.modal.TimeOption;
 import com.boardwords.modal.WordsPOJO;
+import com.boardwords.permissions.RuntimePermission;
 import com.boardwords.preference.Preference;
 import com.boardwords.utils.AnimationUtil;
 import com.boardwords.utils.KeyboardUtils;
 import com.boardwords.utils.MediaPlayerUtil;
 import com.boardwords.utils.TextViewUtil;
+import com.boardwords.utils.VibrationUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.ramotion.foldingcell.FoldingCell;
@@ -155,9 +164,15 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     private AnimationUtil animationUtil;
 
+    private VibrationUtil vibrationUtil;
+
     private Boolean isFirstTime = true;
 
     private String text = "";
+
+    private FoldingCellListAdapter adapter;
+
+    private RuntimePermission runtimePermission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,9 +199,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
             setActionBarTitle(getString(R.string.app_name));
         }
 
-        // Initialize Animation and Keyboard Utilities
+        // Initialize Animation and Keyboard, Vibration And Permissions Utilities
         animationUtil = new AnimationUtil(this);
         keyboardUtils = new KeyboardUtils();
+        vibrationUtil = new VibrationUtil(this);
+        runtimePermission = new RuntimePermission(this);
 
         // Start First List
         List<ItemObject> wordsList = keyboardUtils.getListQwerty();
@@ -225,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         if (menu != null) {
             showKeyboardMenu(menu);
             showTimeMenu(menu);
+            hideShareMenu(menu);
         }
 
         relative_list.setVisibility(View.GONE);
@@ -459,6 +477,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);//Menu Resource, Menu
         showHideMenuList(menu);
+        hideShareMenu(menu);
         menuTime = menu.findItem(R.id.time);
         menuTime.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         setMenuItemTitle(getString(R.string.time) + " " + getString(R.string.time00));
@@ -531,6 +550,27 @@ public class MainActivity extends AppCompatActivity implements Constant,
         menuList.setVisible(false);
     }
 
+    // Show Keyboard Menu List Item
+    private void showSettingMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.settings);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(true);
+    }
+
+    // Show Keyboard Menu List Item
+    private void showShareMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.share);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(true);
+    }
+
+    // Show Keyboard Menu List Item
+    private void hideShareMenu(Menu menu) {
+        MenuItem menuList = menu.findItem(R.id.share);
+        menuList.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuList.setVisible(false);
+    }
+
     // onOptionsItemSelected
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -572,6 +612,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 if (menu != null) {
                     hideKeyboardMenu(menu);
                     hideTimeMenu(menu);
+                    showShareMenu(menu);
                 }
                 hideButtonAnimations();
                 showRecords();
@@ -590,6 +631,16 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
             case R.id.shuffle:
                 setAdapterForWords(keyboardUtils.getListShuffle());
+                return true;
+
+            case R.id.settings:
+                stopTimer();
+                showAlertSettings(this);
+                return true;
+
+            case R.id.share:
+                Log.e("Share", "Share");
+                takeScreenshot();
                 return true;
 
             default:
@@ -635,6 +686,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         if (menu != null) {
             showKeyboardMenu(menu);
             showTimeMenu(menu);
+            showSettingMenu(menu);
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -703,6 +755,8 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // On Item Click On Characters
     @Override
     public void onItemClick(View view, int position) {
+        vibrationUtil.doVibration();
+        mpUtil.playSoundButton(this);
         if (Preference.getRatingStar(this) >= 5) {
             showMessageCongratulationRatingDone();
             return;
@@ -743,8 +797,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
                     setAdapterForCharacters(characterList);
                 }
 
-                Log.e("ss", "ss>>" + characterList.size());
-
                 if (characterList != null && characterList.size() == 10) {
                     showMessageCongratulationNextBoard();
                     return;
@@ -767,6 +819,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         relateButtons.setVisibility(View.VISIBLE);
         btnTimeOut.setVisibility(View.VISIBLE);
         animationUtil.slideInUp(btnTimeOut);
+        vibrationUtil.doVibration();
     }
 
     // Set TimeOut Rating
@@ -786,10 +839,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // Show Dialog For Board Name
     private void showDialogForBoardName() {
         mpUtil.playSoundButton(this);
-        new LovelyTextInputDialog(this)
+        new LovelyTextInputDialog(this, R.style.TintTheme)
                 .setCancelable(false)
-                .setTopColorRes(R.color.colorPrimary)
                 .setTopTitle(getString(R.string.setBoardName))
+                .setTopTitleColor(R.color.md_white_1000)
+                .setTopColorRes(R.color.colorPrimary)
                 .setIcon(R.drawable.ic_board_24dp)
                 .setConfirmButtonColor(getResources().getColor(R.color.colorAccent))
                 .setInputFilter(R.string.setBoardName, new LovelyTextInputDialog.TextFilter() {
@@ -820,7 +874,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         mpUtil.playSoundButton(this);
         // Follow Link:- https://android-arsenal.com/details/1/3452
         ArrayAdapter<TimeOption> adapter = new TimeAdapter(this, loadTimeOptions());
-        new LovelyChoiceDialog(this)
+        new LovelyChoiceDialog(this, R.style.TintTheme)
                 .setCancelable(false)
                 .setTopTitle(getString(R.string.setTime))
                 .setTopTitleColor(R.color.md_white_1000)
@@ -857,6 +911,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message
     private void showMessageCongratulation() {
+        vibrationUtil.doVibration();
         mpUtil.playSoundButton(this);
         relateButtons.setVisibility(View.VISIBLE);
         btnThumb.setVisibility(View.VISIBLE);
@@ -865,6 +920,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message For Make Next Board
     private void showMessageCongratulationNextBoard() {
+        vibrationUtil.doVibrationPatternLong();
         mpUtil.playSoundButton(this);
         relateButtons.setVisibility(View.VISIBLE);
         btnStar.setVisibility(View.VISIBLE);
@@ -873,6 +929,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message When 5 Star Rating is Done
     private void showMessageCongratulationRatingDone() {
+        vibrationUtil.doVibrationPatternLong();
         mpUtil.playSoundButton(this);
         relateButtons.setVisibility(View.VISIBLE);
         btnTrophy.setVisibility(View.VISIBLE);
@@ -885,7 +942,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Dialog For Exit
     private void showDialogForExit() {
-        new LovelyStandardDialog(this)
+        new LovelyStandardDialog(this, R.style.TintTheme)
                 .setTopColorRes(R.color.colorPrimary)
                 .setButtonsColorRes(R.color.colorAccent)
                 .setIcon(R.drawable.ic_exit_to_app_white_24dp)
@@ -899,7 +956,12 @@ public class MainActivity extends AppCompatActivity implements Constant,
                         MainActivity.super.onBackPressed();
                     }
                 })
-                .setNegativeButton(android.R.string.no, null)
+                .setNegativeButton(android.R.string.no, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        startTimer();
+                    }
+                })
                 .show();
     }
 
@@ -1034,8 +1096,41 @@ public class MainActivity extends AppCompatActivity implements Constant,
         });
     }
 
+    // Take Screenshot...
+    private void takeScreenshot() {
+        if (!runtimePermission.checkPermissionForWriteExternalStorage()) {
+            runtimePermission.requestPermissionForExternalStorage();
+            return;
+        }
+
+        try {
+            if (!relative_list.isShown()) {
+                return;
+            }
+            View v1 = relative_list;
+            v1.setDrawingCacheEnabled(true);
+            Bitmap resultBitmap = Bitmap.createBitmap(v1.getDrawingCache(true));
+            try {
+                resultBitmap = Bitmap.createScaledBitmap(resultBitmap, v1.getMeasuredWidth(), v1.getMeasuredHeight(), false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            v1.setDrawingCacheEnabled(false);
+
+            final Bitmap finalResultBitmap = resultBitmap;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    shareRecord(MainActivity.this, finalResultBitmap, getString(R.string.app_name) + System.currentTimeMillis());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     // Share Bitmap Image
-    public static void shareBitmap(Context ctx, Bitmap bitmap, String fileName) {
+    public static void shareRecord(Context ctx, Bitmap bitmap, String fileName) {
         try {
             String pathofBmp = MediaStore.Images.Media.insertImage(ctx.getContentResolver(), bitmap, fileName, null);
             Uri bmpUri = Uri.parse(pathofBmp);
@@ -1049,6 +1144,64 @@ public class MainActivity extends AppCompatActivity implements Constant,
             e.printStackTrace();
             Log.e("Exception", "Exception>>>" + e.getMessage());
         }
+    }
+
+    // Request Call Back Method To check permission is granted by user or not for MarshMallow
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case WRITE_EXTERNAL_STORAGE_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    takeScreenshot();
+                } else {
+                    Toast.makeText(this, "Sorry you can't share record, Please enable permission first", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    // Show Alert Dialog For Settings
+    public void showAlertSettings(final Context context) {
+        AlertDialog.Builder ab = new AlertDialog.Builder(context);
+        ab.setCancelable(false);
+        View v = LayoutInflater.from(context).inflate(R.layout.setting_action, null);
+        ab.setView(v);
+        final Switch toggleSound = (Switch) v.findViewById(R.id.toggleSound);
+        final Switch toggleVibration = (Switch) v.findViewById(R.id.toggleVibration);
+        if (Preference.getSound(context)) {
+            toggleSound.setChecked(true);
+        } else {
+            toggleSound.setChecked(false);
+        }
+
+        if (Preference.getVibration(context)) {
+            toggleVibration.setChecked(true);
+        } else {
+            toggleVibration.setChecked(false);
+        }
+
+        ab.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                boolean sButton = toggleSound.isChecked();
+                boolean vButton = toggleVibration.isChecked();
+                Preference.setSound(context, sButton);
+                Preference.setVibration(context, vButton);
+                startTimer();
+                dialog.dismiss();
+            }
+        });
+        ab.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startTimer();
+                dialog.dismiss();
+            }
+        });
+        ab.create().show();
     }
 
 //    // Show Banner Ads
@@ -1159,6 +1312,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // onBackPressed
     @Override
     public void onBackPressed() {
+        stopTimer();
         showDialogForExit();
     }
 

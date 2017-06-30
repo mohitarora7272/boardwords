@@ -5,6 +5,7 @@ import android.content.Context;
 import android.media.MediaPlayer;
 
 import com.boardwords.R;
+import com.boardwords.preference.Preference;
 
 @SuppressWarnings("ALL")
 public class MediaPlayerUtil implements MediaPlayer.OnCompletionListener {
@@ -29,15 +30,17 @@ public class MediaPlayerUtil implements MediaPlayer.OnCompletionListener {
 
     // Play Sound Button
     public void playSoundButton(Context ctx) {
-        try {
-            if (mp.isPlaying()) {
-                mp.stop();
-                mp.release();
-                mp = MediaPlayer.create(ctx, R.raw.button_sound);
+        if(Preference.getSound(ctx)){
+            try {
+                if (mp.isPlaying()) {
+                    mp.stop();
+                    mp.release();
+                    mp = MediaPlayer.create(ctx, R.raw.button_sound);
+                }
+                mp.start();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            mp.start();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

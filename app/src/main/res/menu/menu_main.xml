@@ -45,4 +45,20 @@
         </menu>
     </item>
 
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/ic_settings_white_24dp"
+        android:orderInCategory="400"
+        android:showAsAction="always"
+        android:title="@string/settings"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/share"
+        android:icon="@drawable/ic_share_white_24dp"
+        android:orderInCategory="400"
+        android:showAsAction="always"
+        android:title="@string/share"
+        tools:ignore="AppCompatResource" />
+
 </menu>

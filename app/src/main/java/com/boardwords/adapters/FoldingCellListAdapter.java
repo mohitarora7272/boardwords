@@ -33,6 +33,7 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
     private int[] androidColors;
     private List<WordsPOJO> listCh;
     private MediaPlayerUtil mediaPlayerUtil;
+    private FoldingCell cell;
 
     public FoldingCellListAdapter(Context context, List<WordsPOJO> listCh) {
         super(context, 0, listCh);
@@ -48,7 +49,7 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         // get item for selected view
         WordsPOJO item = listCh.get(position);
         // if cell is exists - reuse it, if not - create the new one from resource
-        FoldingCell cell = (FoldingCell) convertView;
+        cell = (FoldingCell) convertView;
         ViewHolder viewHolder;
         if (cell == null) {
             viewHolder = new ViewHolder();
@@ -119,17 +120,6 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         int randomAndroidColor10 = androidColors[new Random().nextInt(androidColors.length)];
         viewHolder.tv_Ten.setText(item.getWordsList().get(9));
         viewHolder.tv_Ten.setBackgroundColor(randomAndroidColor10);
-
-
-        //set custom btn handler for list item from that item
-//        if (item.getRequestBtnClickListener() != null) {
-//            viewHolder.tv_One.setOnClickListener(item.getRequestBtnClickListener());
-//            viewHolder.tv_Two.setOnClickListener(item.getRequestBtnClickListener());
-//        } else {
-//            // (optionally) add "default" handler if no handler found in item
-//            viewHolder.tv_One.setOnClickListener(defaultRequestBtnClickListener);
-//            viewHolder.tv_Two.setOnClickListener(defaultRequestBtnClickListener);
-//        }
 
         viewHolder.tv_One.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -232,7 +222,7 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         unfoldedIndexes.remove(position);
     }
 
-    private void registerUnfold(int position) {
+    public void registerUnfold(int position) {
         unfoldedIndexes.add(position);
     }
 
@@ -249,6 +239,10 @@ public class FoldingCellListAdapter extends ArrayAdapter<WordsPOJO> implements M
         AlphaAnimation click = new AlphaAnimation(1F, 0.4F);
         click.setDuration(500);
         view.startAnimation(click);
+    }
+
+    public FoldingCell getFoldingCell() {
+        return cell;
     }
 
     // View lookup cache

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <color name="colorPrimary">#03A9F4</color>
-    <color name="colorPrimaryDark">#03A9F4</color>
+    <color name="colorPrimary">#7AC5CC</color>
+    <color name="colorPrimaryDark">#7AC5CC</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="blackTransparent">#70000000</color>
+    <color name="blackTransparent">#80000000</color>
     <color name="record_anim">#B761C3</color>
     <color name="time_anim">#248787</color>
 

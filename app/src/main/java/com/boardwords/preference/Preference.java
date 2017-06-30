@@ -75,4 +75,26 @@ public class Preference implements Constant {
         SharedPreferences sharedpreferences = ctx.getSharedPreferences(MY_PREFERENCE, Context.MODE_PRIVATE);
         return sharedpreferences.getInt(KEY_TIMEOUT_RATING, 0);
     }
+
+    public static void setVibration(Context ctx, boolean val){
+        SharedPreferences sharedpreferences = ctx.getSharedPreferences(MY_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putBoolean(KEY_VIBRATION, val).apply();
+    }
+
+    public static void setSound(Context ctx, boolean val){
+        SharedPreferences sharedpreferences = ctx.getSharedPreferences(MY_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putBoolean(KEY_SOUND, val).apply();
+    }
+
+    public static boolean getVibration(Context ctx) {
+        SharedPreferences sharedpreferences = ctx.getSharedPreferences(MY_PREFERENCE, Context.MODE_PRIVATE);
+        return sharedpreferences.getBoolean(KEY_VIBRATION, true);
+    }
+
+    public static boolean getSound(Context ctx) {
+        SharedPreferences sharedpreferences = ctx.getSharedPreferences(MY_PREFERENCE, Context.MODE_PRIVATE);
+        return sharedpreferences.getBoolean(KEY_SOUND, true);
+    }
 }

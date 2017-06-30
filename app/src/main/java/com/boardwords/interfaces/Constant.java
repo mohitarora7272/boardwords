@@ -17,10 +17,14 @@ public interface Constant {
     String KEY_RATING_STAR = "rating_star";
     String KEY_TIMEOUT_RATING = "timeout_rating";
     String KEY_LIST = "list";
+    String KEY_VIBRATION = "vibration";
+    String KEY_SOUND = "sound";
 
     int TIME_INTERVAL_10_SEC = 10000;
     int TIME_INTERVAL_15_SEC = 15000;
     int TIME_INTERVAL_20_SEC = 20000;
     int TIME_INTERVAL_1_SEC = 1000;
     int RESPONSE_CODE = 200;
+
+    int WRITE_EXTERNAL_STORAGE_CODE = 1000;
 }

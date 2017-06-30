@@ -25,6 +25,5 @@ public interface Constant {
     int TIME_INTERVAL_20_SEC = 20000;
     int TIME_INTERVAL_1_SEC = 1000;
     int RESPONSE_CODE = 200;
-
     int WRITE_EXTERNAL_STORAGE_CODE = 1000;
 }

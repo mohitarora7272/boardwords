@@ -60,6 +60,10 @@ import com.boardwords.utils.KeyboardUtils;
 import com.boardwords.utils.MediaPlayerUtil;
 import com.boardwords.utils.TextViewUtil;
 import com.boardwords.utils.VibrationUtil;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.ramotion.foldingcell.FoldingCell;
@@ -101,8 +105,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
     @BindView(R.id.relative_list)
     RelativeLayout relative_list;
 
-    //@BindView(R.id.adView)
-    //AdView mAdView;
+    @BindView(R.id.adView)
+    AdView mAdView;
+
+    @BindView(R.id.adView2)
+    AdView mAdView2;
 
     @BindView(R.id.img_backspace)
     ImageButton img_backspace;
@@ -158,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     private ArrayList<WordsPOJO> c_List;
 
-    //private InterstitialAd mInterstitialAd;
+    private InterstitialAd mInterstitialAd;
 
     private KeyboardUtils keyboardUtils;
 
@@ -234,7 +241,8 @@ public class MainActivity extends AppCompatActivity implements Constant,
         }
 
         // Show Banner Ad Here...
-        // showBannerAd();
+        showBannerAd();
+        initInterstitialAd();
     }
 
     @OnClick(R.id.img_cancel)
@@ -364,6 +372,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
         if (menu != null) {
             hideKeyboardMenu(menu);
             hideTimeMenu(menu);
+            showShareMenu(menu);
         }
         hideButtonAnimations();
         showRecords();
@@ -639,7 +648,6 @@ public class MainActivity extends AppCompatActivity implements Constant,
                 return true;
 
             case R.id.share:
-                Log.e("Share", "Share");
                 takeScreenshot();
                 return true;
 
@@ -920,6 +928,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message For Make Next Board
     private void showMessageCongratulationNextBoard() {
+        showInterstitial();
         vibrationUtil.doVibrationPatternLong();
         mpUtil.playSoundButton(this);
         relateButtons.setVisibility(View.VISIBLE);
@@ -929,6 +938,7 @@ public class MainActivity extends AppCompatActivity implements Constant,
 
     // Show Congratulation Message When 5 Star Rating is Done
     private void showMessageCongratulationRatingDone() {
+        showInterstitial();
         vibrationUtil.doVibrationPatternLong();
         mpUtil.playSoundButton(this);
         relateButtons.setVisibility(View.VISIBLE);
@@ -1204,110 +1214,123 @@ public class MainActivity extends AppCompatActivity implements Constant,
         ab.create().show();
     }
 
-//    // Show Banner Ads
-//    private void showBannerAd() {
-//        mAdView.loadAd(new AdRequest.Builder().build());
-//        mAdView.setAdListener(new AdListener() {
-//            public void onAdLoaded() {
-//                Log.e("Banner", "onAdLoaded");
-//            }
-//
-//            @Override
-//            public void onAdClosed() {
-//                Log.e("Banner", "onAdClosed");
-//            }
-//
-//            @Override
-//            public void onAdFailedToLoad(int errorCode) {
-//                Log.e("Banner", "onAdFailedToLoad>>" + errorCode);
-//            }
-//
-//            @Override
-//            public void onAdLeftApplication() {
-//                Log.e("Banner", "onAdLeftApplication");
-//            }
-//
-//            @Override
-//            public void onAdOpened() {
-//                Log.e("Banner", "onAdOpened");
-//            }
-//        });
-//    }
-//
-//    // Initialize InterstitialAd
-//    private void initInterstitialAd() {
-//        mInterstitialAd = new InterstitialAd(this);
-//        // set the ad unit ID
-//        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
-//        loadInterstitialAds();
-//    }
-//
-//    // Show Interstitial Ads
-//    private void showInterstitial() {
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                // Show Ads
-//                if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
-//                    mInterstitialAd.show();
-//                } else {
-//                    loadInterstitialAds();
-//                }
-//            }
-//        });
-//
-//        mInterstitialAd.setAdListener(new AdListener() {
-//            public void onAdLoaded() {
-//                Log.e("Interstitial", "onAdLoaded");
-//            }
-//
-//            @Override
-//            public void onAdClosed() {
-//                Log.e("Interstitial", "onAdClosed");
-//                // Load the next interstitial.
-//                loadInterstitialAds();
-//            }
-//
-//            @Override
-//            public void onAdFailedToLoad(int errorCode) {
-//                Log.e("Interstitial", "onAdFailedToLoad>>" + errorCode);
-//            }
-//
-//            @Override
-//            public void onAdLeftApplication() {
-//                Log.e("Interstitial", "onAdLeftApplication");
-//            }
-//
-//            @Override
-//            public void onAdOpened() {
-//                Log.e("Interstitial", "onAdOpened");
-//            }
-//        });
-//    }
-//
-//    // Load Interstitial Ads
-//    private void loadInterstitialAds() {
-//        // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
-//        if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
-//            mInterstitialAd.loadAd(new AdRequest.Builder().build());
-//        }
-//    }
-//
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        if (mAdView != null) {
-//            mAdView.resume();
-//        }
-//    }
-//
-//    @Override
-//    public void onPause() {
-//        super.onPause();
-//        if (mAdView != null) {
-//            mAdView.pause();
-//        }
-//    }
+    // Show Banner Ads
+    private void showBannerAd() {
+        // For Testing Purpose
+//        AdRequest adRequest = new AdRequest.Builder()
+//                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+//                // Check the LogCat to get your test device ID
+//                .addTestDevice("9E847D99F08C0028B6613E597754B38A")
+//                .build();
+        mAdView.loadAd(new AdRequest.Builder().build());
+        mAdView2.loadAd(new AdRequest.Builder().build());
+        mAdView.setAdListener(new AdListener() {
+            public void onAdLoaded() {
+                Log.e("Banner", "onAdLoaded");
+            }
+
+            @Override
+            public void onAdClosed() {
+                Log.e("Banner", "onAdClosed");
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                Log.e("Banner", "onAdFailedToLoad>>" + errorCode);
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                Log.e("Banner", "onAdLeftApplication");
+            }
+
+            @Override
+            public void onAdOpened() {
+                Log.e("Banner", "onAdOpened");
+            }
+        });
+    }
+
+    // Initialize InterstitialAd
+    private void initInterstitialAd() {
+        mInterstitialAd = new InterstitialAd(this);
+        // set the ad unit ID
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
+        loadInterstitialAds();
+    }
+
+    // Show Interstitial Ads
+    private void showInterstitial() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Show Ads
+                if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
+                    mInterstitialAd.show();
+                } else {
+                    loadInterstitialAds();
+                }
+            }
+        });
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            public void onAdLoaded() {
+                Log.e("Interstitial", "onAdLoaded");
+            }
+
+            @Override
+            public void onAdClosed() {
+                Log.e("Interstitial", "onAdClosed");
+                // Load the next interstitial.
+                loadInterstitialAds();
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                Log.e("Interstitial", "onAdFailedToLoad>>" + errorCode);
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                Log.e("Interstitial", "onAdLeftApplication");
+            }
+
+            @Override
+            public void onAdOpened() {
+                Log.e("Interstitial", "onAdOpened");
+            }
+        });
+    }
+
+    // Load Interstitial Ads
+    private void loadInterstitialAds() {
+        // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
+        if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
+            // For Testing Purpose
+//            AdRequest adRequest = new AdRequest.Builder()
+//                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+//                    // Check the LogCat to get your test device ID
+//                    .addTestDevice("9E847D99F08C0028B6613E597754B38A")
+//                    .build();
+            mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+    }
 
     // onBackPressed
     @Override
@@ -1323,11 +1346,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
         Preference.setBoardTime(this, -1);
         stopTimer();
 
-//        if (mAdView != null) {
-//            mAdView.destroy();
-//        }
-//        if (mInterstitialAd != null) {
-//            mInterstitialAd = null;
-//        }
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        if (mInterstitialAd != null) {
+            mInterstitialAd = null;
+        }
     }
 }

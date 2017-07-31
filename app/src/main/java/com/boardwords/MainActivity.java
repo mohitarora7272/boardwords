@@ -1217,11 +1217,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
     // Show Banner Ads
     private void showBannerAd() {
         // For Testing Purpose
-//        AdRequest adRequest = new AdRequest.Builder()
-//                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-//                // Check the LogCat to get your test device ID
-//                .addTestDevice("9E847D99F08C0028B6613E597754B38A")
-//                .build();
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                // Check the LogCat to get your test device ID
+                .addTestDevice("9E847D99F08C0028B6613E597754B38A")
+                .build();
         mAdView.loadAd(new AdRequest.Builder().build());
         mAdView2.loadAd(new AdRequest.Builder().build());
         mAdView.setAdListener(new AdListener() {
@@ -1307,11 +1307,11 @@ public class MainActivity extends AppCompatActivity implements Constant,
         // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
         if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
             // For Testing Purpose
-//            AdRequest adRequest = new AdRequest.Builder()
-//                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-//                    // Check the LogCat to get your test device ID
-//                    .addTestDevice("9E847D99F08C0028B6613E597754B38A")
-//                    .build();
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    // Check the LogCat to get your test device ID
+                    .addTestDevice("9E847D99F08C0028B6613E597754B38A")
+                    .build();
             mInterstitialAd.loadAd(new AdRequest.Builder().build());
         }
     }

@@ -29,10 +29,13 @@
     <string name="new_game" tools:ignore="UnusedResources">New Game</string>
     <string name="share" tools:ignore="UnusedResources">Share</string>
 
-    <!-- AdMob ad unit IDs -->
-    <string name="add_Id">"ca-app-pub-3104530433760081~4904542254"</string>
-    <string name="banner_home_footer">"ca-app-pub-3104530433760081/6381275451"</string>
-    <string name="interstitial_full_screen">"ca-app-pub-3104530433760081/7858008654"</string>
+    <!-- iamdeveloper7272 email AdMob ad unit IDs -->
+    <string name="banner_home_footer">"ca-app-pub-7493083145656430/4443173905"</string>
+    <string name="interstitial_full_screen">"ca-app-pub-7493083145656430/5919907101"</string>
+
+    <!-- aroraneha8650 email AdMob ad unit IDs -->
+   <!-- <string name="banner_home_footer">"ca-app-pub-3104530433760081/6381275451"</string>
+    <string name="interstitial_full_screen">"ca-app-pub-3104530433760081/7858008654"</string>-->
 
     <string name="keyboard">Keyboard</string>
     <string name="atoz">A To Z</string>
